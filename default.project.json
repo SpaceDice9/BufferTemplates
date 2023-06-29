@@ -1,0 +1,16 @@
+{
+  "name": "test",
+  "tree": {
+    "$className": "DataModel",
+
+    "ServerScriptService": {
+      "BufferTemplates": {
+        "$path": "src/BufferTemplates"
+      },
+
+      "BufferTemplatesTest": {
+        "$path": "tests/speed.server.lua"
+      }
+    }
+  }
+}
