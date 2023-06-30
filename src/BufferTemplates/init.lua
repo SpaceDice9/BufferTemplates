@@ -56,10 +56,11 @@ function spawnNewBitBuffer(buffer)
 	return buffer
 end
 
-function buildEmptyTemplate(write, read)
+function buildEmptyTemplate(write, read, check)
 	local template = {
 		WriteIntoBuffer = write,
 		ReadFromBuffer = read,
+		Validate = check,
 	}
 	
 	setmetatable(template, Template)
@@ -67,7 +68,7 @@ function buildEmptyTemplate(write, read)
 	return template
 end
 
-function buildStandardTemplate(bufferDataType)
+function buildStandardTemplate(bufferDataType, check)
 	local readMethod = "Read" .. bufferDataType
 	local writeMethod = "Write" .. bufferDataType
 	
@@ -82,18 +83,18 @@ function buildStandardTemplate(bufferDataType)
 		return data, buffer
 	end
 
-	local template = buildEmptyTemplate(write, read)
+	local template = buildEmptyTemplate(write, read, check)
 
 	return template
 end
 
-function BufferTemplates.Custom(write, read)
+function BufferTemplates.Custom(write, read, check)
 	local writeWithBuffer = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
 		return write(data, buffer)
 	end
 	
-	local template = buildEmptyTemplate(writeWithBuffer, read)
+	local template = buildEmptyTemplate(writeWithBuffer, read, check)
 
 	return template
 end
@@ -110,8 +111,12 @@ function BufferTemplates.UInt(bitWidth: number)
 		local data = buffer:ReadUInt(bitWidth)
 		return data, buffer
 	end
+
+	local check = function(data)
+		return type(data) == "number"
+	end
 	
-	local template = buildEmptyTemplate(write, read)
+	local template = buildEmptyTemplate(write, read, check)
 	
 	return template
 end
@@ -128,24 +133,37 @@ function BufferTemplates.Int(bitWidth: number)
 		return data, buffer
 	end
 
-	local template = {
-		WriteIntoBuffer = write,
-		ReadFromBuffer = read,
-	}
+	local check = function(data)
+		return type(data) == "number"
+	end
+
+	local template = buildEmptyTemplate(write, read, check)
 
 	return template
 end
 
 function BufferTemplates.Float32()
-	return buildStandardTemplate("Float32")
+	local check = function(data)
+		return type(data) == "number"
+	end
+
+	return buildStandardTemplate("Float32", check)
 end
 
 function BufferTemplates.Float64()
-	return buildStandardTemplate("Float64")
+	local check = function(data)
+		return type(data) == "number"
+	end
+
+	return buildStandardTemplate("Float64", check)
 end
 
 function BufferTemplates.Char()
-	return buildStandardTemplate("Char")
+	local check = function(data)
+		return type(data) == "string"
+	end
+
+	return buildStandardTemplate("Char", check)
 end
 
 function BufferTemplates.StaticString(charLength: number)
@@ -176,17 +194,29 @@ function BufferTemplates.StaticString(charLength: number)
 		return data, buffer
 	end
 
-	local template = buildEmptyTemplate(write, read)
+	local check = function(data)
+		return type(data) == "string"
+	end
+
+	local template = buildEmptyTemplate(write, read, check)
 
 	return template
 end
 
 function BufferTemplates.String()
-	return buildStandardTemplate("String")
+	local check = function(data)
+		return type(data) == "string"
+	end
+
+	return buildStandardTemplate("String", check)
 end
 
 function BufferTemplates.Bool()
-	return buildStandardTemplate("Bool")
+	local check = function(data)
+		return type(data) == "boolean"
+	end
+
+	return buildStandardTemplate("Bool", check)
 end
 
 function BufferTemplates.Table(t)
@@ -199,7 +229,6 @@ function BufferTemplates.Table(t)
 			if Template.IsTemplate(otherTemplate) then
 				otherTemplate.WriteIntoBuffer(dataValue, buffer)
 			else
-				print(dataKey)
 				error("Non-template contamination!")
 			end
 		end
@@ -214,6 +243,7 @@ function BufferTemplates.Table(t)
 			if Template.IsTemplate(otherTemplate) then
 				data[dataKey] = otherTemplate.ReadFromBuffer(buffer)
 			else
+				print(otherTemplate)
 				error("Non-template contamination!")
 			end
 		end
@@ -221,7 +251,29 @@ function BufferTemplates.Table(t)
 		return data, buffer
 	end
 
-	local template = buildEmptyTemplate(write, read)
+	local check = function(data)
+		if type(data) ~= "table" then
+			return false
+		end
+
+		for key, value in pairs(data) do
+			local template = t[key]
+
+			if not template then
+				return false
+			end
+
+			local valid = template.Validate(value)
+
+			if not valid then
+				return false
+			end
+		end
+
+		return true
+	end
+
+	local template = buildEmptyTemplate(write, read, check)
 
 	return template
 end
@@ -253,8 +305,24 @@ function BufferTemplates.StaticArray(size: number, repeatedTemplate)
 
 		return data, buffer
 	end
+
+	local check = function(data)
+		if type(data) ~= "table" then
+			return false
+		end
+
+		for _, value in pairs(data) do
+			local valid = repeatedTemplate.Validate(value)
+
+			if not valid then
+				return false
+			end
+		end
+
+		return true
+	end
 	
-	local template = buildEmptyTemplate(write, read)
+	local template = buildEmptyTemplate(write, read, check)
 	
 	return template
 end
@@ -285,36 +353,49 @@ function BufferTemplates.Array(repeatedTemplate)
 
 		return data, buffer
 	end
+
+	local check = function(data)
+		return type(data) == "table"
+	end
 	
-	local template = buildEmptyTemplate(write, read)
+	local template = buildEmptyTemplate(write, read, check)
 	
 	return template
 end
 
 function BufferTemplates.Enum(enumData)
 	local bitWidth = math.ceil(math.log(#enumData, 2))
+	local enumLookup = {}
+
+	for position, enum in pairs(enumData) do
+		enumLookup[enum] = position
+	end
 	
 	local write = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
-		local position = table.find(enumData, data)
+		local position = enumLookup[data]
 		
 		if not position then
 			error("Could not find enum")
 		end
 		
-		buffer:WriteUInt(bitWidth, position)
+		buffer:WriteUInt(bitWidth, position - 1)
 
 		return buffer
 	end
 
 	local read = function(buffer)
 		local position = buffer:ReadUInt(bitWidth)
-		local data = enumData[position]
+		local data = enumData[position + 1]
 
 		return data, buffer
 	end
 
-	local template = buildEmptyTemplate(write, read)
+	local check = function(data)
+		return enumLookup[data]
+	end
+
+	local template = buildEmptyTemplate(write, read, check)
 
 	return template
 end
@@ -340,7 +421,11 @@ function BufferTemplates.Color3()
 		return data, buffer
 	end
 
-	local template = buildEmptyTemplate(write, read)
+	local check = function(data)
+		return typeof(data) == "Color3"
+	end
+
+	local template = buildEmptyTemplate(write, read, check)
 
 	return template
 end
@@ -366,7 +451,11 @@ function BufferTemplates.Vector3()
 		return data, buffer
 	end
 
-	local template = buildEmptyTemplate(write, read)
+	local check = function(data)
+		return typeof(data) == "Vector3"
+	end
+
+	local template = buildEmptyTemplate(write, read, check)
 
 	return template
 end
@@ -374,15 +463,18 @@ end
 --contains multiple templates together
 function BufferTemplates.Group(templates)
 	local bitWidth = math.ceil(math.log(#templates, 2))
-	
+
 	local write = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
 		
 		for position, template in pairs(templates) do
-			local newBuffer = buffer:clone()--BitBuffer.FromBase91(buffer:ToBase91())
-			local success, msg = pcall(template.WriteIntoBuffer, data, newBuffer)
+			if not template.Validate then
+				error("Failed to validate grouped templates")
+			end
+
+			local valid = template.Validate(data)
 			
-			if success then
+			if valid then
 				buffer:WriteUInt(bitWidth, position - 1)
 				template.WriteIntoBuffer(data, buffer)
 				
@@ -392,16 +484,28 @@ function BufferTemplates.Group(templates)
 
 		return buffer
 	end
-
+	
 	local read = function(buffer)
 		local position = buffer:ReadUInt(bitWidth)
 		local data = templates[position + 1].ReadFromBuffer(buffer)
 
 		return data, buffer
 	end
-	
-	local template = buildEmptyTemplate(write, read)
-	
+
+	local check = function(data)
+		for _, template in pairs(templates) do
+			local valid = template.Validate(data)
+
+			if valid then
+				return true
+			end
+		end
+
+		return false
+	end
+
+	local template = buildEmptyTemplate(write, read, check)
+
 	return template
 end
 
