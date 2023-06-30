@@ -1,6 +1,6 @@
 This is a modification of this post: https://devforum.roblox.com/t/buffertemplates-a-super-aggressive-compression-library/2436237/
 
-> WARNING: BufferTemplates is in alpha and a proof of concept. **DO NOT USE THIS IN PRODUCTION OR LIVE EXPERIENCES**. I'm being serious. I made this in a single day and did not thoroughly debug it!
+> WARNING: BufferTemplates is in alpha and a proof of concept. **DO NOT USE THIS IN PRODUCTION OR LIVE EXPERIENCES**.
 
 ___
 # What is BufferTemplates?
