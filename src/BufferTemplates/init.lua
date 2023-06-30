@@ -1,27 +1,25 @@
 local BitBuffer = require(script.BitBuffer)
 
 local BufferTemplates = {}
+BufferTemplates.__index = BufferTemplates
 
-local Template = {}
-Template.__index = Template
-
-function Template:CompressIntoBase91(data: any)
+function BufferTemplates:CompressIntoBase91(data: any)
 	return self.WriteIntoBuffer(data):ToBase91()
 end
 
-function Template:DecompressFromBase91(b91: string)
+function BufferTemplates:DecompressFromBase91(b91: string)
 	return self.ReadFromBuffer(BitBuffer.FromBase91(b91))
 end
 
-function Template:CompressIntoBase64(data: any)
+function BufferTemplates:CompressIntoBase64(data: any)
 	return self.WriteIntoBuffer(data):ToBase64()
 end
 
-function Template:DecompressFromBase64(b64: string)
+function BufferTemplates:DecompressFromBase64(b64: string)
 	return self.ReadFromBuffer(BitBuffer.FromBase64(b64))
 end
 
-function Template.IsTemplate(template)
+function BufferTemplates.IsTemplate(template)
 	return type(template) == "table" and template.WriteIntoBuffer and template.ReadFromBuffer
 end
 
@@ -63,7 +61,7 @@ function buildEmptyTemplate(write, read, check)
 		Validate = check,
 	}
 	
-	setmetatable(template, Template)
+	setmetatable(template, BufferTemplates)
 	
 	return template
 end
@@ -226,7 +224,7 @@ function BufferTemplates.Table(t)
 		for dataKey, dataValue in pairs(data) do
 			local otherTemplate = t[dataKey]
 
-			if Template.IsTemplate(otherTemplate) then
+			if BufferTemplates.IsTemplate(otherTemplate) then
 				otherTemplate.WriteIntoBuffer(dataValue, buffer)
 			else
 				error("Non-template contamination!")
@@ -240,7 +238,7 @@ function BufferTemplates.Table(t)
 		local data = {}
 		
 		for dataKey, otherTemplate in pairs(t) do
-			if Template.IsTemplate(otherTemplate) then
+			if BufferTemplates.IsTemplate(otherTemplate) then
 				data[dataKey] = otherTemplate.ReadFromBuffer(buffer)
 			else
 				print(otherTemplate)
