@@ -8,8 +8,16 @@
         "$path": "src/BufferTemplates"
       },
 
-      "BufferTemplatesTest": {
-        "$path": "tests/speed.server.lua"
+      "BufferTemplatesTests": {
+        "$className": "Folder",
+        
+        "TemplateTest": {
+          "$path": "tests/template_test.server.lua"
+        },
+
+        "GroupSpeedTest": {
+          "$path": "tests/group_speed.server.lua"
+        }
       }
     }
   }
