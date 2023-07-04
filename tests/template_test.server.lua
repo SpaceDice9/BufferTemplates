@@ -25,6 +25,7 @@ local t = BufferTemplates.Table({
 	staticString = BufferTemplates.StaticString(8),
 	string = BufferTemplates.String(),
 	staticArray = BufferTemplates.StaticArray(4, enum),
+	staticSizeArray = BufferTemplates.StaticSizeArray(4, enum),
 	array = BufferTemplates.Array(t2),
 
 	fixed = BufferTemplates.Fixed(4, 3),
@@ -47,13 +48,19 @@ function generateSampleData()
 
 		fixed = -5.6346,
 		varuint = 56,
-		varint = -59
+		varint = -59,
 	}
 
 	local staticArray = {}
 
 	for _ = 1, 4 do
 		table.insert(staticArray, enumData[random:NextInteger(1, #enumData)])
+	end
+
+	local staticSizeArray = {}
+
+	for _ = 1, 9 do
+		table.insert(staticSizeArray, enumData[random:NextInteger(1, #enumData)])
 	end
 
 	local array = {}
@@ -73,6 +80,7 @@ function generateSampleData()
 
 	data.staticArray = staticArray
 	data.array = array
+	data.staticSizeArray = staticSizeArray
 
 	return data
 end

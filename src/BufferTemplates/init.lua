@@ -429,6 +429,61 @@ function BufferTemplates.StaticArray(size: number, repeatedTemplate)
 	return template
 end
 
+function BufferTemplates.StaticSizeArray(bitWidth: number, repeatedTemplate)
+	local maxSize = 2^bitWidth
+
+	local write = function(data, buffer)
+		buffer = spawnNewBitBuffer(buffer)
+		local size = #data
+
+		if size > maxSize then
+			error("Attempted to encode data of forbidden size")
+			return
+		end
+
+		buffer:WriteUInt(bitWidth, size)
+		
+		for _, v in pairs(data) do
+			repeatedTemplate.WriteIntoBuffer(v, buffer)
+		end
+
+		return buffer
+	end
+
+	local read = function(buffer)
+		local data = {}
+		local size = buffer:ReadUInt(bitWidth)
+		
+		for i = 1, size do
+			local value = repeatedTemplate.ReadFromBuffer(buffer)
+			
+			table.insert(data, value)
+		end
+
+		return data, buffer
+	end
+
+	local check = function(data)
+		if type(data) ~= "table" then
+			return false
+		end
+
+		for _, value in pairs(data) do
+			local valid = repeatedTemplate.Validate(value)
+
+			if not valid then
+				return false
+			end
+		end
+
+		return true
+	end
+	
+	local template = buildEmptyTemplate(write, read, check)
+	
+	return template
+end
+
 function BufferTemplates.Array(repeatedTemplate)
 	local write = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
