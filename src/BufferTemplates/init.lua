@@ -265,8 +265,8 @@ function BufferTemplates.Table(t)
 	local write = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
 		
-		for dataKey, dataValue in pairs(data) do
-			local otherTemplate = t[dataKey]
+		for dataKey, otherTemplate in pairs(t) do
+			local dataValue = data[dataKey]
 
 			if BufferTemplates.IsTemplate(otherTemplate) then
 				otherTemplate.WriteIntoBuffer(dataValue, buffer)

@@ -24,11 +24,10 @@ local t = BufferTemplates.Table({
 	char = BufferTemplates.Char(),
 	staticString = BufferTemplates.StaticString(8),
 	string = BufferTemplates.String(),
+	staticArray = BufferTemplates.StaticArray(4, enum),
+	array = BufferTemplates.Array(t2),
 
 	fixed = BufferTemplates.Fixed(4, 3),
-
-	staticArray = BufferTemplates.StaticArray(4, enum),
-	array = BufferTemplates.Array(t2)
 })
 
 function generateSampleData()
