@@ -305,6 +305,49 @@ function BufferTemplates.StaticString(charLength: number)
 	return template
 end
 
+function BufferTemplates.StaticSizeString(sizeBitWidth: number)
+	local maxLength = 2^sizeBitWidth - 1
+
+	local write = function(data, buffer)
+		buffer = spawnNewBitBuffer(buffer)
+		local length = string.len(data)
+
+		if length > maxLength then
+			error("Attempted to encode data of forbidden size")
+			return
+		end
+
+		buffer:WriteUInt(sizeBitWidth, length)
+		
+		local charList = string.split(data, "")
+
+		for _, char in charList do
+			buffer:WriteChar(char)
+		end
+
+		return buffer
+	end
+
+	local read = function(buffer)
+		local data = ""
+		local size = buffer:ReadUInt(sizeBitWidth)
+
+		for i = 1, size do
+			data = data .. buffer:ReadChar()
+		end
+
+		return data, buffer
+	end
+
+	local check = function(data)
+		return type(data) == "string"
+	end
+
+	local template = buildEmptyTemplate(write, read, check)
+
+	return template
+end
+
 function BufferTemplates.String()
 	local check = function(data)
 		return type(data) == "string"

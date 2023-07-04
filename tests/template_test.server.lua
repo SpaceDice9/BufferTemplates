@@ -30,7 +30,8 @@ local t = BufferTemplates.Table({
 
 	fixed = BufferTemplates.Fixed(4, 3),
 	varuint = BufferTemplates.VarUInt(4),
-	varint = BufferTemplates.VarInt(4)
+	varint = BufferTemplates.VarInt(4),
+	staticSizeString = BufferTemplates.StaticSizeString(4)
 })
 
 function generateSampleData()
@@ -49,6 +50,7 @@ function generateSampleData()
 		fixed = -5.6346,
 		varuint = 56,
 		varint = -59,
+		staticSizeString = "Derelict Ship"
 	}
 
 	local staticArray = {}
