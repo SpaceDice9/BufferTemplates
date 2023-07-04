@@ -140,6 +140,66 @@ function BufferTemplates.Int(bitWidth: number)
 	return template
 end
 
+function BufferTemplates.VarUInt(sizeBitWidth: number)
+	local write = function(data, buffer)
+		buffer = spawnNewBitBuffer(buffer)
+
+		local size = math.ceil(math.log(data, 2))
+
+		if data == 0 then
+			size = 0
+		end
+
+		buffer:WriteUInt(sizeBitWidth, size)
+		buffer:WriteUInt(size + 1, data)
+		return buffer
+	end
+
+	local read = function(buffer)
+		local size = buffer:ReadUInt(sizeBitWidth)
+		local data = buffer:ReadUInt(size + 1)
+		return data, buffer
+	end
+
+	local check = function(data)
+		return type(data) == "number"
+	end
+
+	local template = buildEmptyTemplate(write, read, check)
+
+	return template
+end
+
+function BufferTemplates.VarInt(sizeBitWidth: number)
+	local write = function(data, buffer)
+		buffer = spawnNewBitBuffer(buffer)
+
+		local size = math.ceil(math.log(math.abs(data), 2))
+
+		if data == 0 then
+			size = 0
+		end
+
+		buffer:WriteUInt(sizeBitWidth, size)
+		buffer:WriteInt(size + 2, data)
+		return buffer
+	end
+
+	local read = function(buffer)
+		local size = buffer:ReadUInt(sizeBitWidth) + 2
+		local data = buffer:ReadInt(size)
+		return data, buffer
+	end
+
+	local check = function(data)
+		return type(data) == "number"
+	end
+
+	local template = buildEmptyTemplate(write, read, check)
+
+	return template
+end
+
 function BufferTemplates.Fixed(intBitWidth: number, fracBitWidth: number)
 	assert(fracBitWidth > 1, "Fractional bit width must be greater than 1")
 

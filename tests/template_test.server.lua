@@ -28,6 +28,8 @@ local t = BufferTemplates.Table({
 	array = BufferTemplates.Array(t2),
 
 	fixed = BufferTemplates.Fixed(4, 3),
+	varuint = BufferTemplates.VarUInt(4),
+	varint = BufferTemplates.VarInt(4)
 })
 
 function generateSampleData()
@@ -43,7 +45,9 @@ function generateSampleData()
 		staticString = "EIGHTf0u",
 		string = "TemplateTest",
 
-		fixed = -5.6346
+		fixed = -5.6346,
+		varuint = 56,
+		varint = -59
 	}
 
 	local staticArray = {}
