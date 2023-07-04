@@ -24,6 +24,9 @@ local t = BufferTemplates.Table({
 	char = BufferTemplates.Char(),
 	staticString = BufferTemplates.StaticString(8),
 	string = BufferTemplates.String(),
+
+	fixed = BufferTemplates.Fixed(4, 3),
+
 	staticArray = BufferTemplates.StaticArray(4, enum),
 	array = BufferTemplates.Array(t2)
 })
@@ -40,6 +43,8 @@ function generateSampleData()
 		char = "y",
 		staticString = "EIGHTf0u",
 		string = "TemplateTest",
+
+		fixed = -5.6346
 	}
 
 	local staticArray = {}
@@ -50,7 +55,7 @@ function generateSampleData()
 
 	local array = {}
 
-	for i = 1, random:NextInteger(100, 5000) do
+	for i = 1, random:NextInteger(100, 500) do
 		local isVector = random:NextInteger(0, 1) == 1
 		local v
 

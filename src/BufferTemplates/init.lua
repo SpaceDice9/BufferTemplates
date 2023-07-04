@@ -140,6 +140,50 @@ function BufferTemplates.Int(bitWidth: number)
 	return template
 end
 
+function BufferTemplates.Fixed(intBitWidth: number, fracBitWidth: number)
+	assert(fracBitWidth > 1, "Fractional bit width must be greater than 1")
+
+	if intBitWidth == 1 then
+		warn("Unexpected behavior may occur at integer bit width 1")
+	end
+
+	local multiplier = 2^(fracBitWidth - 1)
+
+	local write = function(data, buffer)
+		local int, frac = math.modf(data)
+
+		buffer = spawnNewBitBuffer(buffer)
+		buffer:WriteInt(fracBitWidth, math.round(frac*multiplier))
+
+		if intBitWidth > 0 then
+			buffer:WriteInt(intBitWidth, int)
+		end
+
+		return buffer
+	end
+
+	local read = function(buffer)
+		local frac = buffer:ReadInt(fracBitWidth)/multiplier
+		local int = 0
+
+		if intBitWidth > 0 then
+			int = buffer:ReadInt(intBitWidth)
+		end
+
+		local data = int + frac
+
+		return data, buffer
+	end
+
+	local check = function(data)
+		return type(data) == "number"
+	end
+
+	local template = buildEmptyTemplate(write, read, check)
+
+	return template
+end
+
 function BufferTemplates.Float32()
 	local check = function(data)
 		return type(data) == "number"

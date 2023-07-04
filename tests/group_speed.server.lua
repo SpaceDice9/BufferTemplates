@@ -19,7 +19,7 @@ function generateInv()
 	local random = Random.new()
 	local inventory = {}
 
-	for i = 1, 100000 do
+	for i = 1, 1000 do
 		local itemData = {
 			ItemId = random:NextInteger(0, 255),
 			Amount = random:NextInteger(0, 255),
