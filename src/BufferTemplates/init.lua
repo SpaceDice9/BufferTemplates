@@ -473,7 +473,7 @@ function BufferTemplates.StaticArray(size: number, repeatedTemplate)
 end
 
 function BufferTemplates.StaticSizeArray(bitWidth: number, repeatedTemplate)
-	local maxSize = 2^bitWidth
+	local maxSize = 2^bitWidth - 1
 
 	local write = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
