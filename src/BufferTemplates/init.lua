@@ -27,6 +27,16 @@ function getRequiredBitWidth(size)
 	return math.floor(math.log(size, 2)) + 1
 end
 
+local typeChecks = {
+	string = function(v)
+		return type(v) == "string"
+	end,
+
+	number = function(v)
+		return type(v) == "number"
+	end,
+}
+
 --[[
 Default Buffer Types:
   Bool v
@@ -114,10 +124,7 @@ function BufferTemplates.UInt(bitWidth: number)
 		return data, buffer
 	end
 
-	local check = function(data)
-		return type(data) == "number"
-	end
-	
+	local check = typeChecks.number
 	local template = buildEmptyTemplate(write, read, check)
 	
 	return template
@@ -135,10 +142,7 @@ function BufferTemplates.Int(bitWidth: number)
 		return data, buffer
 	end
 
-	local check = function(data)
-		return type(data) == "number"
-	end
-
+	local check = typeChecks.number
 	local template = buildEmptyTemplate(write, read, check)
 
 	return template
@@ -165,10 +169,7 @@ function BufferTemplates.VarUInt(sizeBitWidth: number)
 		return data, buffer
 	end
 
-	local check = function(data)
-		return type(data) == "number"
-	end
-
+	local check = typeChecks.number
 	local template = buildEmptyTemplate(write, read, check)
 
 	return template
@@ -195,10 +196,7 @@ function BufferTemplates.VarInt(sizeBitWidth: number)
 		return data, buffer
 	end
 
-	local check = function(data)
-		return type(data) == "number"
-	end
-
+	local check = typeChecks.number
 	local template = buildEmptyTemplate(write, read, check)
 
 	return template
@@ -239,37 +237,22 @@ function BufferTemplates.Fixed(intBitWidth: number, fracBitWidth: number)
 		return data, buffer
 	end
 
-	local check = function(data)
-		return type(data) == "number"
-	end
-
+	local check = typeChecks.number
 	local template = buildEmptyTemplate(write, read, check)
 
 	return template
 end
 
 function BufferTemplates.Float32()
-	local check = function(data)
-		return type(data) == "number"
-	end
-
-	return buildStandardTemplate("Float32", check)
+	return buildStandardTemplate("Float32", typeChecks.number)
 end
 
 function BufferTemplates.Float64()
-	local check = function(data)
-		return type(data) == "number"
-	end
-
-	return buildStandardTemplate("Float64", check)
+	return buildStandardTemplate("Float64", typeChecks.number)
 end
 
 function BufferTemplates.Char()
-	local check = function(data)
-		return type(data) == "string"
-	end
-
-	return buildStandardTemplate("Char", check)
+	return buildStandardTemplate("Char", typeChecks.string)
 end
 
 function BufferTemplates.StaticString(charLength: number)
@@ -300,10 +283,7 @@ function BufferTemplates.StaticString(charLength: number)
 		return data, buffer
 	end
 
-	local check = function(data)
-		return type(data) == "string"
-	end
-
+	local check = typeChecks.string
 	local template = buildEmptyTemplate(write, read, check)
 
 	return template
@@ -343,21 +323,14 @@ function BufferTemplates.StaticSizeString(sizeBitWidth: number)
 		return data, buffer
 	end
 
-	local check = function(data)
-		return type(data) == "string"
-	end
-
+	local check = typeChecks.string
 	local template = buildEmptyTemplate(write, read, check)
 
 	return template
 end
 
 function BufferTemplates.String()
-	local check = function(data)
-		return type(data) == "string"
-	end
-
-	return buildStandardTemplate("String", check)
+	return buildStandardTemplate("String", typeChecks.string)
 end
 
 function BufferTemplates.Bool()
