@@ -23,6 +23,10 @@ function BufferTemplates.IsTemplate(template)
 	return type(template) == "table" and template.WriteIntoBuffer and template.ReadFromBuffer
 end
 
+function getRequiredBitWidth(size)
+	return math.floor(math.log(size, 2)) + 1
+end
+
 --[[
 Default Buffer Types:
   Bool v
@@ -144,20 +148,20 @@ function BufferTemplates.VarUInt(sizeBitWidth: number)
 	local write = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
 
-		local size = math.ceil(math.log(data, 2))
+		local size = getRequiredBitWidth(data)
 
 		if data == 0 then
-			size = 0
+			size = 1
 		end
 
 		buffer:WriteUInt(sizeBitWidth, size)
-		buffer:WriteUInt(size + 1, data)
+		buffer:WriteUInt(size, data)
 		return buffer
 	end
 
 	local read = function(buffer)
 		local size = buffer:ReadUInt(sizeBitWidth)
-		local data = buffer:ReadUInt(size + 1)
+		local data = buffer:ReadUInt(size)
 		return data, buffer
 	end
 
@@ -174,19 +178,19 @@ function BufferTemplates.VarInt(sizeBitWidth: number)
 	local write = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
 
-		local size = math.ceil(math.log(math.abs(data), 2))
+		local size = getRequiredBitWidth(math.abs(data))
 
 		if data == 0 then
-			size = 0
+			size = 1
 		end
 
 		buffer:WriteUInt(sizeBitWidth, size)
-		buffer:WriteInt(size + 2, data)
+		buffer:WriteInt(size + 1, data)
 		return buffer
 	end
 
 	local read = function(buffer)
-		local size = buffer:ReadUInt(sizeBitWidth) + 2
+		local size = buffer:ReadUInt(sizeBitWidth) + 1
 		local data = buffer:ReadInt(size)
 		return data, buffer
 	end
@@ -564,7 +568,7 @@ function BufferTemplates.Array(repeatedTemplate)
 end
 
 function BufferTemplates.Enum(enumData)
-	local bitWidth = math.ceil(math.log(#enumData, 2))
+	local bitWidth = getRequiredBitWidth(#enumData)
 	local enumLookup = {}
 
 	for position, enum in pairs(enumData) do
@@ -662,7 +666,7 @@ end
 
 --contains multiple templates together
 function BufferTemplates.Group(templates)
-	local bitWidth = math.ceil(math.log(#templates, 2))
+	local bitWidth = getRequiredBitWidth(#templates)
 
 	local write = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
