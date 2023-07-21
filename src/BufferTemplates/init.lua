@@ -637,6 +637,96 @@ function BufferTemplates.Vector3()
 	return template
 end
 
+function BufferTemplates.Vector2()
+	local write = function(data, buffer)
+		buffer = spawnNewBitBuffer(buffer)
+		local x, y = data.X, data.Y
+
+		buffer:WriteFloat32(x)
+		buffer:WriteFloat32(y)
+
+		return buffer
+	end
+
+	local read = function(buffer)
+		local x = buffer:ReadFloat32()
+		local y = buffer:ReadFloat32()
+		local data = Vector2.new(x, y)
+
+		return data, buffer
+	end
+
+	local check = function(data)
+		return typeof(data) == "Vector2"
+	end
+
+	local template = buildEmptyTemplate(write, read, check)
+
+	return template
+end
+
+function BufferTemplates.FixedVector3(intBitWidth, fracBitWidth)
+	local numberTemplate = BufferTemplates.Fixed(intBitWidth, fracBitWidth)
+
+	local write = function(data, buffer)
+		buffer = spawnNewBitBuffer(buffer)
+		local x, y, z = data.X, data.Y, data.Z
+
+		numberTemplate.WriteIntoBuffer(x, buffer)
+		numberTemplate.WriteIntoBuffer(y, buffer)
+		numberTemplate.WriteIntoBuffer(z, buffer)
+
+		return buffer
+	end
+
+	local read = function(buffer)
+		local x = numberTemplate.ReadFromBuffer(buffer)
+		local y = numberTemplate.ReadFromBuffer(buffer)
+		local z = numberTemplate.ReadFromBuffer(buffer)
+		local data = Vector3.new(x, y, z)
+
+		return data, buffer
+	end
+
+	local check = function(data)
+		return typeof(data) == "Vector3"
+	end
+
+	local template = buildEmptyTemplate(write, read, check)
+
+	return template
+end
+
+function BufferTemplates.FixedVector2(intBitWidth, fracBitWidth)
+	local numberTemplate = BufferTemplates.Fixed(intBitWidth, fracBitWidth)
+
+	local write = function(data, buffer)
+		buffer = spawnNewBitBuffer(buffer)
+		local x, y, z = data.X, data.Y
+
+		numberTemplate.WriteIntoBuffer(x, buffer)
+		numberTemplate.WriteIntoBuffer(y, buffer)
+
+		return buffer
+	end
+
+	local read = function(buffer)
+		local x = numberTemplate.ReadFromBuffer(buffer)
+		local y = numberTemplate.ReadFromBuffer(buffer)
+		local data = Vector2.new(x, y)
+
+		return data, buffer
+	end
+
+	local check = function(data)
+		return typeof(data) == "Vector2"
+	end
+
+	local template = buildEmptyTemplate(write, read, check)
+
+	return template
+end
+
 --contains multiple templates together
 function BufferTemplates.Group(templates)
 	local bitWidth = getRequiredBitWidth(#templates)

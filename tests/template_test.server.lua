@@ -12,7 +12,11 @@ local enum = BufferTemplates.Enum(enumData)
 
 local t2 = BufferTemplates.Group({
 	BufferTemplates.Color3(),
-	BufferTemplates.Vector3()
+	-- BufferTemplates.Vector3(),
+
+	-- BufferTemplates.Vector2(),
+	BufferTemplates.FixedVector3(10, 3),
+	BufferTemplates.FixedVector2(10, 3),
 })
 
 local t = BufferTemplates.Table({
@@ -68,13 +72,19 @@ function generateSampleData()
 	local array = {}
 
 	for i = 1, random:NextInteger(100, 500) do
-		local isVector = random:NextInteger(0, 1) == 1
+		local typeIndex = random:NextInteger(0, 4)
 		local v
 
-		if isVector then
+		if typeIndex == 0 then
 			v = Vector3.new(random:NextNumber(), random:NextNumber(), random:NextNumber())*random:NextNumber(-50, 0)
-		else
+		elseif typeIndex == 1 then
 			v = Color3.new(random:NextNumber(), random:NextNumber(), random:NextNumber())
+		elseif typeIndex == 2 then
+			v = Vector2.new(random:NextNumber(), random:NextNumber())*random:NextNumber(-50, 0)
+		elseif typeIndex == 3 then
+			v = Vector3.new(random:NextNumber(), random:NextNumber(), random:NextNumber())*random:NextNumber(-50, 0)
+		elseif typeIndex == 4 then
+			v = Vector2.new(random:NextNumber(), random:NextNumber())*random:NextNumber(-50, 0)
 		end
 
 		table.insert(array, v)
