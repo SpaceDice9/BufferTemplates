@@ -41,12 +41,12 @@ local typeChecks = {
 Default Buffer Types:
   Bool v
   Bytes
-  
+
   UInt v
   Int v
   Float32 v
   Float64 v
-  
+
   Char v
   StringDyn v
 ]]
@@ -64,7 +64,7 @@ function spawnNewBitBuffer(buffer)
 	if not buffer then
 		buffer = BitBuffer.new()
 	end
-	
+
 	return buffer
 end
 
@@ -74,16 +74,16 @@ function buildEmptyTemplate(write, read, check)
 		ReadFromBuffer = read,
 		Validate = check,
 	}
-	
+
 	setmetatable(template, BufferTemplates)
-	
+
 	return template
 end
 
 function buildStandardTemplate(bufferDataType, check)
 	local readMethod = "Read" .. bufferDataType
 	local writeMethod = "Write" .. bufferDataType
-	
+
 	local write = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
 		buffer[writeMethod](buffer, data)
@@ -105,7 +105,7 @@ function BufferTemplates.Custom(write, read, check)
 		buffer = spawnNewBitBuffer(buffer)
 		return write(data, buffer)
 	end
-	
+
 	local template = buildEmptyTemplate(writeWithBuffer, read, check)
 
 	return template
@@ -118,7 +118,7 @@ function BufferTemplates.UInt(bitWidth: number)
 		buffer:WriteUInt(bitWidth, data)
 		return buffer
 	end
-	
+
 	local read = function(buffer)
 		local data = buffer:ReadUInt(bitWidth)
 		return data, buffer
@@ -126,7 +126,7 @@ function BufferTemplates.UInt(bitWidth: number)
 
 	local check = typeChecks.number
 	local template = buildEmptyTemplate(write, read, check)
-	
+
 	return template
 end
 
@@ -263,7 +263,7 @@ function BufferTemplates.StaticString(charLength: number)
 			error("Attempted to encode data of forbidden size")
 			return
 		end
-		
+
 		local charList = string.split(data, "")
 
 		for _, char in charList do
@@ -302,7 +302,7 @@ function BufferTemplates.StaticSizeString(sizeBitWidth: number)
 		end
 
 		buffer:WriteUInt(sizeBitWidth, length)
-		
+
 		local charList = string.split(data, "")
 
 		for _, char in charList do
@@ -344,7 +344,7 @@ end
 function BufferTemplates.Table(t)
 	local write = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
-		
+
 		for dataKey, otherTemplate in pairs(t) do
 			local dataValue = data[dataKey]
 
@@ -354,13 +354,13 @@ function BufferTemplates.Table(t)
 				error("Non-template contamination!")
 			end
 		end
-		
+
 		return buffer
 	end
 
 	local read = function(buffer)
 		local data = {}
-		
+
 		for dataKey, otherTemplate in pairs(t) do
 			if BufferTemplates.IsTemplate(otherTemplate) then
 				data[dataKey] = otherTemplate.ReadFromBuffer(buffer)
@@ -369,7 +369,7 @@ function BufferTemplates.Table(t)
 				error("Non-template contamination!")
 			end
 		end
-		
+
 		return data, buffer
 	end
 
@@ -403,12 +403,12 @@ end
 function BufferTemplates.StaticArray(size: number, repeatedTemplate)
 	local write = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
-		
+
 		if #data ~= size then
 			error("Attempted to encode data of forbidden size")
 			return
 		end
-		
+
 		for _, v in pairs(data) do
 			repeatedTemplate.WriteIntoBuffer(v, buffer)
 		end
@@ -418,10 +418,10 @@ function BufferTemplates.StaticArray(size: number, repeatedTemplate)
 
 	local read = function(buffer)
 		local data = {}
-		
+
 		for i = 1, size do
 			local value = repeatedTemplate.ReadFromBuffer(buffer)
-			
+
 			table.insert(data, value)
 		end
 
@@ -443,9 +443,9 @@ function BufferTemplates.StaticArray(size: number, repeatedTemplate)
 
 		return true
 	end
-	
+
 	local template = buildEmptyTemplate(write, read, check)
-	
+
 	return template
 end
 
@@ -462,7 +462,7 @@ function BufferTemplates.StaticSizeArray(bitWidth: number, repeatedTemplate)
 		end
 
 		buffer:WriteUInt(bitWidth, size)
-		
+
 		for _, v in pairs(data) do
 			repeatedTemplate.WriteIntoBuffer(v, buffer)
 		end
@@ -473,10 +473,10 @@ function BufferTemplates.StaticSizeArray(bitWidth: number, repeatedTemplate)
 	local read = function(buffer)
 		local data = {}
 		local size = buffer:ReadUInt(bitWidth)
-		
+
 		for i = 1, size do
 			local value = repeatedTemplate.ReadFromBuffer(buffer)
-			
+
 			table.insert(data, value)
 		end
 
@@ -498,16 +498,16 @@ function BufferTemplates.StaticSizeArray(bitWidth: number, repeatedTemplate)
 
 		return true
 	end
-	
+
 	local template = buildEmptyTemplate(write, read, check)
-	
+
 	return template
 end
 
 function BufferTemplates.Array(repeatedTemplate)
 	local write = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
-		
+
 		local size = #data
 		buffer:WriteUInt(24, size)
 
@@ -534,9 +534,9 @@ function BufferTemplates.Array(repeatedTemplate)
 	local check = function(data)
 		return type(data) == "table"
 	end
-	
+
 	local template = buildEmptyTemplate(write, read, check)
-	
+
 	return template
 end
 
@@ -547,15 +547,15 @@ function BufferTemplates.Enum(enumData)
 	for position, enum in pairs(enumData) do
 		enumLookup[enum] = position
 	end
-	
+
 	local write = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
 		local position = enumLookup[data]
-		
+
 		if not position then
 			error("Could not find enum")
 		end
-		
+
 		buffer:WriteUInt(bitWidth, position - 1)
 
 		return buffer
@@ -594,7 +594,7 @@ function BufferTemplates.Color3()
 		local g = buffer:ReadUInt(8)
 		local b = buffer:ReadUInt(8)
 		local data = Color3.fromRGB(r, g, b)
-		
+
 		return data, buffer
 	end
 
@@ -733,25 +733,25 @@ function BufferTemplates.Group(templates)
 
 	local write = function(data, buffer)
 		buffer = spawnNewBitBuffer(buffer)
-		
+
 		for position, template in pairs(templates) do
 			if not template.Validate then
 				error("Failed to validate grouped templates")
 			end
 
 			local valid = template.Validate(data)
-			
+
 			if valid then
 				buffer:WriteUInt(bitWidth, position - 1)
 				template.WriteIntoBuffer(data, buffer)
-				
+
 				break
 			end
 		end
 
 		return buffer
 	end
-	
+
 	local read = function(buffer)
 		local position = buffer:ReadUInt(bitWidth)
 		local data = templates[position + 1].ReadFromBuffer(buffer)
